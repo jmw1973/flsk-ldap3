@@ -1,8 +1,11 @@
 from flask import Flask, request
 from app import app
-from ldap3 import Server, Connection, SIMPLE, SUBTREE, ALL
+from ldap3 import Server, Connection, SIMPLE, SUBTREE, ALL, MODIFY_REPLACE
 import jwt, requests, base64, json, getpass, sys
 import logging, secrets, string
+from ldap3 import (HASHED_SALTED_SHA, MODIFY_REPLACE)
+from ldap3.utils.hashed import hashed
+
 
 sys.path.append('/usr/local/lib/python3.9/site-packages')
 
@@ -83,10 +86,10 @@ def auth():
     checkUserAccount = search_user(user_account_name)
     app.logger.info(checkUserAccount)
 
-  if checkUserAccount == "ACCOUNT_DISABLED":
+  if checkUserAccount != "ACCOUNT_NOTEXISTS":
     app.logger.info(user_account_name + ": user has existing account, enabling account and returning new password")
-    newpassword = generate_password()
-    return newpassword
+    # newpassword = generate_password()
+    return checkUserAccount
   else:
     app.logger.info(user_account_name + ": user has no existing account, going to run through account provisioning workflow")
     newpassword = generate_password() 
@@ -117,8 +120,16 @@ def search_user(userid):
     result = ""
 
     match userAccountControl:
-      case 514:
-        return "ACCOUNT_DISABLED"
+      case 514: #"ACCOUNT_DISABLED"
+          newpassword = generate_password()
+          changeuserpassword = modify_user_password(userdn, newpassword)
+          app.logger.info("result of password change: " + str(changeuserpassword))
+          if changeuserpassword == 0:
+            enableaccount = modify_user_attribute(userdn, 'userAccountControl', 512)
+            app.logger.info("result of enable user account: " + str(enableaccount))
+            if enableaccount == 0:
+              app.logger.info("account enabled successfully")
+              return newpassword
       case 528:
         return "ACCOUNT_LOCKED"
       case 530:
@@ -145,7 +156,25 @@ print(app.config.get('LDAPuser'))
 print(app.config.get('LDAPpassword'))
 # add_user('mytestuser', 'mytestuser', 'John', 'Doe')
 
+def modify_user_password(userdn, password):
+  # dn = user.entry_get_dn()
+  conn = connect_ldap()
+  hashed_password = hashed(HASHED_SALTED_SHA, password)
+  changes = {'userPassword': [(MODIFY_REPLACE, [hashed_password])]}
+  success = conn.modify(userdn, changes=changes)
+  if not success:
+    print('Unable to change password for %s' % dn)
+    #print(conn.connection.result)
+    raise ValueError('Unable to change password')
+    return 1
+  return 0
 
+def modify_user_attribute(userdn, attribute, newattributevalue):
+    conn = connect_ldap()
+    # perform the Modify operation
+    conn.modify(userdn,{attribute: [(MODIFY_REPLACE, [newattributevalue])]})
+    app.logger.info(conn.result)
+    return 0
 
 
 
