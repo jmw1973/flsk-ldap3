@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.10.9
 
 USER 0
 
@@ -7,6 +7,8 @@ WORKDIR /app
 
 COPY requirements.txt ./
 
+RUN apt-get update
+RUN apt-get install -y vim
 RUN python3 -m pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 

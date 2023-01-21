@@ -19,6 +19,19 @@ app.config['LDAPpassword'] = "Yi1se@i^h0"
 app.config['baseDN'] = "cn=users,dc=samdom,dc=example,dc=com"
 app.config['baseDom'] = "dc=samdom,dc=example,dc=com"
 
+DEBUG_LOGGING = 1
+
+# LDAP userAcoountControl properties
+ADS_UF_ACCOUNT_DISABLE = 2
+ADS_UF_HOMEDIR_REQUIRED = 8
+ADS_UF_LOCKOUT = 16
+ADS_UF_PASSWD_NOTREQD = 32
+ADS_UF_PASSWD_CANT_CHANGE = 64
+ADS_UF_ENCRYPTED_TEXT_PASSWORD_ALLOWED = 128
+ADS_UF_NORMAL_ACCOUNT = 512
+ADS_UF_DONT_EXPIRE_PASSWD = 65536
+ADS_UF_PASSWORD_EXPIRED = 8388608
+
 def connect_ldap():
     server = Server(app.config.get('LDAPserver'), get_info=ALL)
     conn = Connection(server, user=app.config.get('LDAPuser'), password=app.config.get('LDAPpassword'), authentication=SIMPLE)
@@ -63,15 +76,17 @@ def auth():
   headers_dict = request.__dict__
   region = 'eu-west-2'
   jwt_token = "787655" # dummy for now
-  user_account_name = "testuser3"
+  user_account_name = "testuser2"
 
   if jwt_token:
     app.logger.info(user_account_name + ": user has authenticated ok: now checking if they have an existing account")
     checkUserAccount = search_user(user_account_name)
+    app.logger.info(checkUserAccount)
 
-  if checkUserAccount == "EXISTS":
-    app.logger.info(user_account_name + ": user has existing account, returning new password")
-    return "201"
+  if checkUserAccount == "ACCOUNT_DISABLED":
+    app.logger.info(user_account_name + ": user has existing account, enabling account and returning new password")
+    newpassword = generate_password()
+    return newpassword
   else:
     app.logger.info(user_account_name + ": user has no existing account, going to run through account provisioning workflow")
     newpassword = generate_password() 
@@ -91,10 +106,25 @@ def search_user(userid):
   # print(conn.entries)
 
   if conn.entries:
-      result = "EXISTS"
+    for entry in conn.entries:
+      userdn = entry.entry_dn
+      userAccountControl = entry['userAccountControl']
+    
+    if DEBUG_LOGGING == 1:
+        app.logger.info(userdn)
+        app.logger.info(userAccountControl)
+
+    result = ""
+
+    match userAccountControl:
+      case 514:
+        return "ACCOUNT_DISABLED"
+      case 528:
+        return "ACCOUNT_LOCKED"
+      case 530:
+        return "ACCOUNT_LOCKED_DISABLED"
   else:
-      result = "NOTEXISTS"
-  return result
+    return "ACCOUNT_NOTEXISTS"
 
 def add_user(userid, sAMAccountName, givenName, sn):
   conn = connect_ldap()
