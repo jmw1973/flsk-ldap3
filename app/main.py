@@ -1,11 +1,11 @@
-from flask import Flask, request
+from flask import Flask, request, redirect, render_template, url_for
 from app import app
 from ldap3 import Server, Connection, SIMPLE, SUBTREE, ALL, MODIFY_REPLACE
 import jwt, requests, base64, json, getpass, sys
 import logging, secrets, string
 from ldap3 import (HASHED_SALTED_SHA, MODIFY_REPLACE)
 from ldap3.utils.hashed import hashed
-
+import forms
 
 sys.path.append('/usr/local/lib/python3.9/site-packages')
 
@@ -16,6 +16,7 @@ if not app.debug:
   app.logger.addHandler(logging.StreamHandler())
   app.logger.setLevel(logging.INFO)
 
+app.config['SECRET_KEY'] = 'hjjlkJJHIGIH6glHGGF'
 app.config['LDAPserver'] = '192.168.1.78'
 app.config['LDAPuser'] = "samdom\\administrator"
 app.config['LDAPpassword'] = "Yi1se@i^h0"
@@ -79,7 +80,7 @@ def auth():
   headers_dict = request.__dict__
   region = 'eu-west-2'
   jwt_token = "787655" # dummy for now
-  user_account_name = "testuser2"
+  user_account_name = "testuser3"
 
   if jwt_token:
     app.logger.info(user_account_name + ": user has authenticated ok: now checking if they have an existing account")
@@ -92,8 +93,12 @@ def auth():
     return checkUserAccount
   else:
     app.logger.info(user_account_name + ": user has no existing account, going to run through account provisioning workflow")
-    newpassword = generate_password() 
-    return newpassword #todo
+    return redirect(url_for('requestAccount'))
+
+@app.route('/requestAccount')
+def requestAccount():
+    form = forms.SignupForm()
+    return render_template('requestAccount.jinja2', form=form, title="Request Account")
 
 def search_user(userid):
   conn = connect_ldap()

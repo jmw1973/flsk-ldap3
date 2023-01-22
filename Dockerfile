@@ -2,7 +2,7 @@ FROM python:3.10.9
 
 USER 0
 
-COPY app/* /app/
+COPY app /app
 WORKDIR /app
 
 COPY requirements.txt ./
