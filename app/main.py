@@ -95,8 +95,9 @@ def auth():
     app.logger.info(user_account_name + ": user has no existing account, going to run through account provisioning workflow")
     return redirect(url_for('requestAccount'))
 
-@app.route('/requestAccount')
+@app.route('/requestAccount',methods=['GET', 'POST'])
 def requestAccount():
+    # todo check jwt token is valid and extract username
     form = forms.SignupForm()
     return render_template('requestAccount.jinja2', form=form, title="Request Account")
 

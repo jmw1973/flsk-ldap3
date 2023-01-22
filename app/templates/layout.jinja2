@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <title>{{ title }} - Hackers and Slackers</title>
+    <title>{{ title }} - Request Account</title>
     <meta name="HandheldFriendly" content="True"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#5eb9d7" >
@@ -30,6 +30,10 @@
     <meta name="twitter:creator" content="@toddrbirchard" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="/.github/flask-wtforms-tutorial@2x.jpg" />
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="{{
+    url_for('static', filename='jquery.js') }}">\x3C/script>'ipt>
 
     {# Styles #}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" type="text/css">

@@ -13,15 +13,15 @@
 {% block content %}
 
     <div class="form-wrapper">
-      <h2 class="title">Sign Up</h2>
+      <h2 class="title">Request Account</h2>
 
       <form method="POST" action="{{ url_for('requestAccount') }}">
           {{ form.csrf_token }}
 
-          <fieldset class="form-field">{{ form.email.label }} {{ form.email }}
-            {% if form.email.errors %}
+          <fieldset class="form-field">{{ form.logonname.label }} {{ form.logonname }}
+            {% if form.logonname.errors %}
               <ul class="errors">
-                {% for error in form.email.errors %}
+                {% for error in form.logonname.errors %}
                   <li class="error">
                       <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
                   </li>
@@ -30,35 +30,11 @@
             {% endif %}
           </fieldset>
 
-          <fieldset class="form-field">{{ form.password.label }} {{ form.password }}
-            {% if form.password.errors %}
-              <ul class="errors">
-                {% for error in form.email.errors %}
-                  <li class="error">
-                      <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          </fieldset>
-
-          <fieldset class="form-field">{{ form.confirmPassword.label }} {{ form.confirmPassword }}
-            {% if form.confirmPassword.errors %}
-              <ul class="errors">
-                {% for error in form.email.errors %}
-                  <li class="error">
-                      <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          </fieldset>
-
-          <fieldset class="form-field">{{ form.title.label }} {{ form.title }}
+          <fieldset class="form-field">{{ form.tenant.label }} {{ form.tenant }}
             <i class="fas fa-caret-down"></i>
-            {% if form.title.errors %}
+            {% if form.tenant.errors %}
               <ul class="errors">
-                {% for error in form.email.errors %}
+                {% for error in form.tenant.errors %}
                   <li class="error">
                       <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
                   </li>
@@ -67,10 +43,10 @@
             {% endif %}
           </fieldset>
 
-          <fieldset class="form-field">{{ form.website.label }} {{ form.website }}
-            {% if form.website.errors %}
+          <fieldset class="form-field">{{ form.otherinfo.label }} {{ form.otherinfo }}
+            {% if form.otherinfo.errors %}
               <ul class="errors">
-                {% for error in form.email.errors %}
+                {% for error in form.otherinfo.errors %}
                   <li class="error">
                       <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
                   </li>
@@ -79,19 +55,6 @@
             {% endif %}
           </fieldset>
 
-          <fieldset class="form-field">{{ form.birthday.label }} {{ form.birthday }}
-            {% if form.birthday.errors %}
-              <ul class="errors">
-                {% for error in form.email.errors %}
-                  <li class="error">
-                      <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          </fieldset>
-
-          {{ form.recaptcha }}
           {{ form.submit }}
 
       </form>

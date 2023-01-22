@@ -1,0 +1,14 @@
+pit1:
+  group_admins:
+    pit1_admins:
+      users:  pit1admin1, pit1admin2
+  group_users:
+    pit1_users:
+      users: pit1user1, pit1user2, pit1user3
+tg3:
+  group_admins:
+    tgs_admins:
+      users: tg3admin1, tg3admin2
+  group_users:
+    tg3_users:
+      users: tg3user1, tg3user2
