@@ -1,0 +1,16 @@
+environment:
+  pit1:
+    pit1_admins:
+      - pit1admin1
+      - pit1admin2
+    pit1_users:
+      - pit1user1
+      - pit1user2
+      - pit1user3
+  tg3:
+    tgs_admins:
+      - tg3admin1
+      - tg3admin2
+    tg3_users:
+      - tg3user1
+      - tg3user2

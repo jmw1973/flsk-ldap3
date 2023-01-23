@@ -1,0 +1,63 @@
+{% extends 'layout.jinja2' %}
+
+{% block styles %}
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/forms.css') }}"
+        type="text/css"
+    />
+
+{% endblock %}
+
+{% block content %}
+
+    <div class="form-wrapper">
+      <h2 class="title">Request Account</h2>
+
+      <form method="POST" action="{{ url_for('requestAccount') }}">
+          {{ form.csrf_token }}
+
+          <fieldset class="form-field">{{ form.logonname.label }} {{ form.logonname }}
+            {% if form.logonname.errors %}
+              <ul class="errors">
+                {% for error in form.logonname.errors %}
+                  <li class="error">
+                      <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </fieldset>
+
+          <fieldset class="form-field">{{ form.tenant.label }} {{ form.tenant }}
+            <i class="fas fa-caret-down"></i>
+            {% if form.tenant.errors %}
+              <ul class="errors">
+                {% for error in form.tenant.errors %}
+                  <li class="error">
+                      <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </fieldset>
+
+          <fieldset class="form-field">{{ form.otherinfo.label }} {{ form.otherinfo }}
+            {% if form.otherinfo.errors %}
+              <ul class="errors">
+                {% for error in form.otherinfo.errors %}
+                  <li class="error">
+                      <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </fieldset>
+
+          {{ form.submit }}
+
+      </form>
+    </div>
+
+{% endblock %}
