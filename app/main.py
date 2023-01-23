@@ -34,7 +34,7 @@ def auth():
   headers_dict = request.__dict__
   region = 'eu-west-2'
   jwt_token = "787655" # dummy for now
-  user_account_name = "testuser3" # test for now
+  user_account_name = "testuser2" # test for now
 
   if jwt_token:
     app.logger.info(user_account_name + ": user has authenticated ok: now checking if they have an existing account")
@@ -63,3 +63,8 @@ def requestAccount():
     # todo check jwt token is valid and extract username
     form = forms.SignupForm()
     return render_template('requestAccount.jinja2', form=form, title="Request Account")
+
+@app.route('/processDataFile')
+def processDataFile():
+    processedDataFile = utils.process_data_file()
+    return processedDataFile

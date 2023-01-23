@@ -1,5 +1,5 @@
 import yaml
-from app import app
+from main import app
 from yaml.loader import SafeLoader
 from ldap3 import Server, Connection, SIMPLE, SUBTREE, ALL, MODIFY_REPLACE, HASHED_SALTED_SHA
 from ldap3.utils.hashed import hashed
@@ -36,9 +36,9 @@ def print_values():
 
 
 # test output
-print_values()
+# print_values()
 
-def process_data():
+def process_data_file():
       data = getEzmeralSourceData()
 
       # iterate through data structure
@@ -47,7 +47,19 @@ def process_data():
         for key, value in value.items():
           print(key) # we have the group
           for user in value:
-            print(user) # we have the user
+            print(user)
+            checkExistingUser = search_user(user)
+            if checkExistingUser == "USER_EXISTS":
+              app.logger.info(user + ": is an existing user")
+            else:
+              app.logger.info(user + ": is NOT an existing user")
+              #print(user + ": is NOT an existing user")
+              app.logger.info(user + ": attempting to add user to LDAP")
+              adduser_result = add_user(user, user)
+              app.logger.info(adduser_result)
+              #print("adduser_result: "+ str(adduser_result))
+            checkExistingUser = ""
+      return "201"
 
 
 def connect_ldap():
@@ -84,6 +96,35 @@ def generate_password():
     # print(pwd)
     return pwd
 
+
+def search_user(userid):
+      conn = connect_ldap()
+      search_filter_user = "(sAMAccountName=" + userid + ")"
+      # print(search_filter_user)
+      conn.search(
+                search_base = app.config.get('baseDom'),
+                search_filter = search_filter_user,
+                search_scope = SUBTREE,
+                attributes=['*']
+                )
+
+      if conn.entries:
+        for entry in conn.entries:
+          userdn = entry.entry_dn
+          userAccountControl = entry['userAccountControl']
+
+        # if DEBUG_LOGGING == 1:
+          #app.logger.info(userdn)
+          #app.logger.info(userAccountControl)
+          conn.unbind()
+          return "USER_EXISTS"
+      else:
+        conn.unbind()
+        return "USER_NOT_EXIST"
+
+
+
+
 def process_user(userid):
       conn = connect_ldap()
       search_filter_user = "(sAMAccountName=" + userid + ")"
@@ -110,6 +151,7 @@ def process_user(userid):
 
         match userAccountControl:
           case "512": #normal, unlocked, enabled
+            conn.unbind()
             return "ACCOUNT_NORMAL"
 
           case 514: #"ACCOUNT_DISABLED"
@@ -121,12 +163,15 @@ def process_user(userid):
               app.logger.info("result of enable user account: " + str(enableaccount))
               if enableaccount == 0:
                 app.logger.info("account enabled successfully")
+                conn.unbind()
                 return newpassword
 
           case 528:
+            conn.unbind()
             return "ACCOUNT_LOCKED"
 
           case 530:
+            conn.unbind()
             return "ACCOUNT_LOCKED_DISABLED"
           case _:
             newpassword = generate_password()
@@ -137,28 +182,33 @@ def process_user(userid):
               app.logger.info("result of enable user account: " + str(enableaccount))
               if enableaccount == 0:
                 app.logger.info("account enabled successfully")
+                conn.unbind()
                 return newpassword
 
       else:
+        conn.unbind()
         return "ACCOUNT_NOT_EXISTS"
 
-def add_user(userid, sAMAccountName, givenName, sn):
+def add_user(userid, sAMAccountName):
       conn = connect_ldap()
       object_class = 'user'
       attr = {
               'sAMAccountName': sAMAccountName,
-              'givenName': givenName,
-              'sn': sn
+              #'givenName': givenName,
+              #'sn': sn
               }
 
       userdn = "cn=" + userid + "," + app.config.get('baseDN')
       conn.add(userdn, object_class, attr)
-      print(conn.response)
+      #print(conn.response)
 
-      print(app.config.get('LDAPserver'))
-      print(app.config.get('LDAPuser'))
-      print(app.config.get('LDAPpassword'))
+      #print(app.config.get('LDAPserver'))
+      #print(app.config.get('LDAPuser'))
+      #print(app.config.get('LDAPpassword'))
       # add_user('mytestuser', 'mytestuser', 'John', 'Doe')
+      result = conn.result
+      conn.unbind()
+      return result
 
 def modify_user_password(userdn, password):
   # dn = user.entry_get_dn()
@@ -170,12 +220,16 @@ def modify_user_password(userdn, password):
     print('Unable to change password for %s' % dn)
     #print(conn.connection.result)
     raise ValueError('Unable to change password')
+    conn.unbind()
     return 1
+  conn.unbind()
   return 0
+  
 
 def modify_user_attribute(userdn, attribute, newattributevalue):
   conn = connect_ldap()
   # perform the Modify operation
   conn.modify(userdn,{attribute: [(MODIFY_REPLACE, [newattributevalue])]})
   app.logger.info(conn.result)
+  conn.unbind()
   return 0
