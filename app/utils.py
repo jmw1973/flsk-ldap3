@@ -5,7 +5,7 @@ from ldap3 import Server, Connection, SIMPLE, SUBTREE, ALL, MODIFY_REPLACE, HASH
 from ldap3.utils.hashed import hashed
 import logging, secrets, string
 
-# LDAP userAcoountControl properties
+# LDAP userAccountControl properties
 ADS_UF_ACCOUNT_DISABLE = 2
 ADS_UF_HOMEDIR_REQUIRED = 8
 ADS_UF_LOCKOUT = 16
@@ -35,9 +35,6 @@ def print_values():
 
 
 
-# test output
-# print_values()
-
 def process_data_file():
       data = getEzmeralSourceData()
 
@@ -46,8 +43,17 @@ def process_data_file():
         print(key)
         for key, value in value.items():
           print(key) # we have the group
+          checkExistingGroup = search_group(key)
+          if checkExistingGroup == "GROUP_EXISTS":
+              app.logger.info(key + ": is an existing Group")
+          else:
+              app.logger.info(key + ": is NOT an existing Group")
+              app.logger.info(key + ": attempting to add group to LDAP")
+              addgroup_result = add_object(key, key, 'group')
+              app.logger.info(addgroup_result)
+              print(addgroup_result)
           for user in value:
-            print(user)
+            print(user) # we have a user
             checkExistingUser = search_user(user)
             if checkExistingUser == "USER_EXISTS":
               app.logger.info(user + ": is an existing user")
@@ -55,11 +61,12 @@ def process_data_file():
               app.logger.info(user + ": is NOT an existing user")
               #print(user + ": is NOT an existing user")
               app.logger.info(user + ": attempting to add user to LDAP")
-              adduser_result = add_user(user, user)
+              adduser_result = add_object(user, user, 'user')
               app.logger.info(adduser_result)
-              #print("adduser_result: "+ str(adduser_result))
+              print(adduser_result)
             checkExistingUser = ""
       return "201"
+
 
 
 def connect_ldap():
@@ -121,6 +128,29 @@ def search_user(userid):
       else:
         conn.unbind()
         return "USER_NOT_EXIST"
+
+
+def search_group(groupid):
+      conn = connect_ldap()
+      search_filter_group = "(sAMAccountName=" + groupid + ")"
+      # print(search_filter_user)
+      conn.search(
+                search_base = app.config.get('baseDom'),
+                search_filter = search_filter_group,
+                search_scope = SUBTREE,
+                attributes=['*']
+                )
+
+      if conn.entries:
+        for entry in conn.entries:
+          groupdn = entry.entry_dn
+          #userAccountControl = entry['userAccountControl']
+
+          conn.unbind()
+          return "GROUP_EXISTS"
+      else:
+        conn.unbind()
+        return "GROUP_NOT_EXIST"
 
 
 
@@ -189,9 +219,9 @@ def process_user(userid):
         conn.unbind()
         return "ACCOUNT_NOT_EXISTS"
 
-def add_user(userid, sAMAccountName):
+def add_object(userid, sAMAccountName, obj_class):
       conn = connect_ldap()
-      object_class = 'user'
+      object_class = obj_class
       attr = {
               'sAMAccountName': sAMAccountName,
               #'givenName': givenName,
@@ -200,11 +230,6 @@ def add_user(userid, sAMAccountName):
 
       userdn = "cn=" + userid + "," + app.config.get('baseDN')
       conn.add(userdn, object_class, attr)
-      #print(conn.response)
-
-      #print(app.config.get('LDAPserver'))
-      #print(app.config.get('LDAPuser'))
-      #print(app.config.get('LDAPpassword'))
       # add_user('mytestuser', 'mytestuser', 'John', 'Doe')
       result = conn.result
       conn.unbind()
@@ -233,3 +258,54 @@ def modify_user_attribute(userdn, attribute, newattributevalue):
   app.logger.info(conn.result)
   conn.unbind()
   return 0
+
+
+def listUser(groupName):
+  conn = connect_ldap()
+  conn.search('cn='+groupName+','+app.config.get('baseDom'), '(objectClass=group)', 'SUBTREE', attributes = ['member'])
+  result = conn.entries
+  print('The ' + groupName + ' Member Lists:')
+  for en in result:
+    for member in en.member.values:
+      member = member.split(',')
+      print(member[0].replace('CN=',''))
+  conn.unbind()
+
+
+def addUserToGroup(userName, groupName):
+  conn = connect_ldap()
+  response = ''
+  conn.search(search_base = app.config.get('baseDom'), search_filter = '(&(objectclass=person)(cn=' + userName + '*))', search_scope='SUBTREE', attributes = ['*'])
+  result = self.conn.entries
+  getDn = result[0].distinguishedName
+  getDn = str(getDn)
+  group = 'cn='+ groupName +','+app.config.get('baseDom')
+  conn.modify(dn=group, changes={'member': [(MODIFY_ADD, [getDn])]})
+  addResult = conn.entries
+  if addResult == [ ]:
+    print('Already Add ' + userName + ' To ' + groupName)
+    response = ('Already Add ' + userName + ' To ' + groupName)
+  else:
+    print('SomeThing Error')
+    response = 'Error Please Check It!'
+  return response
+  conn.unbind()
+
+def delUserFromGroup(self, userName, groupName):
+  conn = connect_ldap()
+  response = ''
+  conn.search(search_base = app.config.get('baseDom'), search_filter = '(&(objectclass=person)(cn=' + userName + '*))', search_scope='SUBTREE', attributes = ['*'])
+  result = self.conn.entries
+  getDn = result[0].distinguishedName
+  getDn = str(getDn)
+  group = 'cn='+ groupName +','+app.config.get('baseDom')
+  conn.modify(dn=group, changes={'member': [(MODIFY_DELETE, [getDn])]})
+  delResult = conn.entries
+  if delResult == [ ]:
+    print('Already Deleted ' + userName + ' From ' + groupName + ' !')
+    response = ('Already Deleted ' + userName + ' From ' + groupName + ' !')
+  else:
+    print('Got Error')
+    response = 'Delete Error'
+  return response
+  conn.unbind() 

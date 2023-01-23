@@ -8,7 +8,7 @@ environment:
       - pit1user2
       - pit1user3
   tg3:
-    tgs_admins:
+    tg3_admins:
       - tg3admin1
       - tg3admin2
     tg3_users:
