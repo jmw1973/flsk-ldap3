@@ -22,8 +22,19 @@ app.config['LDAPuser'] = "samdom\\administrator"
 app.config['LDAPpassword'] = "Yi1se@i^h0"
 app.config['baseDN'] = "cn=users,dc=samdom,dc=example,dc=com"
 app.config['baseDom'] = "dc=samdom,dc=example,dc=com"
-app.config['DEBUG_LOGGING'] = 1
 
+DEBUG_LOGGING = 1
+
+# LDAP userAcoountControl properties
+ADS_UF_ACCOUNT_DISABLE = 2
+ADS_UF_HOMEDIR_REQUIRED = 8
+ADS_UF_LOCKOUT = 16
+ADS_UF_PASSWD_NOTREQD = 32
+ADS_UF_PASSWD_CANT_CHANGE = 64
+ADS_UF_ENCRYPTED_TEXT_PASSWORD_ALLOWED = 128
+ADS_UF_NORMAL_ACCOUNT = 512
+ADS_UF_DONT_EXPIRE_PASSWD = 65536
+ADS_UF_PASSWORD_EXPIRED = 8388608
 
 @app.route('/healthz')
 def healtcheck():
@@ -34,29 +45,20 @@ def auth():
   headers_dict = request.__dict__
   region = 'eu-west-2'
   jwt_token = "787655" # dummy for now
-  user_account_name = "testuser3" # test for now
+  user_account_name = "testuser2"
 
   if jwt_token:
     app.logger.info(user_account_name + ": user has authenticated ok: now checking if they have an existing account")
     checkUserAccount = utils.process_user(user_account_name)
     app.logger.info(checkUserAccount)
 
-    match checkUserAccount:
-      case "ACCOUNT_NORMAL":
-        app.logger.info(user_account_name + ": user account is in normal state, no action required")
-        return checkUserAccount
-
-      case "ACCOUNT_NOT_EXISTS": 
-        app.logger.info(user_account_name + ": user has no existing account, going to run through account provisioning workflow")
-        return redirect(url_for('requestAccount'))
-
-      case _:
-        app.logger.info(user_account_name + ": user has an existing account, going to run through account provisioning workflow")
-        return checkUserAccount
+  if checkUserAccount != "ACCOUNT_NOT_EXISTS":
+    app.logger.info(user_account_name + ": user has existing account, enabling account and returning new password")
+    # newpassword = generate_password()
+    return checkUserAccount
   else:
-    app.logger.info("user was not authenticated!")
-    return "User was not authenticated!"
-
+    app.logger.info(user_account_name + ": user has no existing account, going to run through account provisioning workflow")
+    return redirect(url_for('requestAccount'))
 
 @app.route('/requestAccount',methods=['GET', 'POST'])
 def requestAccount():
