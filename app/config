@@ -1,5 +1,0 @@
-LDAPserver = '192.168.1.78'
-LDAPuser = "samdom\\administrator"
-LDAPpassword = "5ambaPwd@"
-baseDN = "cn=users,dc=samdom,dc=example,dc=com"
-baseDom = "dc=samdom,dc=example,dc=com"

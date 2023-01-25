@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 5000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app", "--access-logfile=-"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "main:app", "--access-logfile=-"]

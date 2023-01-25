@@ -16,13 +16,13 @@ if not app.debug:
   app.logger.addHandler(logging.StreamHandler())
   app.logger.setLevel(logging.INFO)
 
-app.config['SECRET_KEY'] = 'hjjlkJJHIGIH6glHGGF'
-app.config['LDAPserver'] = '192.168.1.78'
-app.config['LDAPuser'] = "samdom\\administrator"
-app.config['LDAPpassword'] = "Yi1se@i^h0"
-app.config['baseDN'] = "cn=users,dc=samdom,dc=example,dc=com"
-app.config['baseDom'] = "dc=samdom,dc=example,dc=com"
-app.config['DEBUG_LOGGING'] = 1
+#app.config['SECRET_KEY'] = "hjjlkJJHIGIH6glHGGF"
+#app.config['LDAPserver'] = "192.168.0.20"
+#app.config['LDAPuser'] = "samdom\\administrator"
+#app.config['LDAPpassword'] = "Yi1se@i^h0"
+#app.config['baseDN'] = "cn=users,dc=samdom,dc=example,dc=com"
+#app.config['baseDom'] = "dc=samdom,dc=example,dc=com"
+#app.config['DEBUG_LOGGING'] = 1
 
 
 @app.route('/healthz')
@@ -68,3 +68,12 @@ def requestAccount():
 def processDataFile():
     processedDataFile = utils.process_data_file()
     return processedDataFile
+
+@app.route('/checkuseringroup')
+def checkusergroups():
+    check = utils.checkUserInGroup('gogo3', 'CSC-AGENT')
+    #app.logger.info(check)
+    return(check)
+
+if __name__ == '__main__':
+        app.run(host='0.0.0.0', debug=True)

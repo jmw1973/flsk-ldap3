@@ -71,7 +71,7 @@ def process_data_file():
 
 def connect_ldap():
   server = Server(app.config.get('LDAPserver'), get_info=ALL)
-  conn = Connection(server, user=app.config.get('LDAPuser'), password="Yi1se@i^h0", authentication=SIMPLE)
+  conn = Connection(server, user=app.config.get('LDAPuser'), password=app.config.get('LDAPpassword'), authentication=SIMPLE)
   conn.bind()
   return conn
 
@@ -260,7 +260,7 @@ def modify_user_attribute(userdn, attribute, newattributevalue):
   return 0
 
 
-def listUser(groupName):
+def listUsersInGroup(groupName):
   conn = connect_ldap()
   conn.search('cn='+groupName+','+app.config.get('baseDom'), '(objectClass=group)', 'SUBTREE', attributes = ['member'])
   result = conn.entries
@@ -276,7 +276,7 @@ def addUserToGroup(userName, groupName):
   conn = connect_ldap()
   response = ''
   conn.search(search_base = app.config.get('baseDom'), search_filter = '(&(objectclass=person)(cn=' + userName + '*))', search_scope='SUBTREE', attributes = ['*'])
-  result = self.conn.entries
+  result = conn.entries
   getDn = result[0].distinguishedName
   getDn = str(getDn)
   group = 'cn='+ groupName +','+app.config.get('baseDom')
@@ -295,7 +295,7 @@ def delUserFromGroup(self, userName, groupName):
   conn = connect_ldap()
   response = ''
   conn.search(search_base = app.config.get('baseDom'), search_filter = '(&(objectclass=person)(cn=' + userName + '*))', search_scope='SUBTREE', attributes = ['*'])
-  result = self.conn.entries
+  result = conn.entries
   getDn = result[0].distinguishedName
   getDn = str(getDn)
   group = 'cn='+ groupName +','+app.config.get('baseDom')
@@ -308,4 +308,25 @@ def delUserFromGroup(self, userName, groupName):
     print('Got Error')
     response = 'Delete Error'
   return response
-  conn.unbind() 
+  conn.unbind()
+
+def checkUserInGroup(userName, groupName):
+  conn = connect_ldap()
+  user_group_dn = 'CN='+groupName+',CN=Users,DC=samdom,DC=example,DC=com'
+  search_filter = "(cn="+userName+")"
+  search_attribute =['memberOf']
+  conn.search(search_base=app.config.get('baseDN'),
+         search_scope=SUBTREE,
+         search_filter=search_filter,
+         attributes=search_attribute)
+
+  #print('conn.response',conn.response)
+  #email = l.response[0]['attributes']['mail']
+  memberOf = conn.response[0]['attributes']['memberOf'] #This is the key
+  #print(memberOf)
+
+  if user_group_dn in memberOf:
+      return "USER_IN_GROUP"
+  else:
+      return "USER_NOT_IN_GROUP"
+  conn.unbind()
