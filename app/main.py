@@ -1,20 +1,26 @@
 from flask import Flask, request, redirect, render_template, url_for
 from app import app
 from ldap3 import Server, Connection, SIMPLE, SUBTREE, ALL, MODIFY_REPLACE
-import jwt, requests, base64, json, getpass, sys
+import jwt, requests, base64, json, getpass, sys, os
 import logging, secrets, string
 from ldap3 import (HASHED_SALTED_SHA, MODIFY_REPLACE)
 from ldap3.utils.hashed import hashed
 import forms, utils
+from flask_wtf.csrf import CSRFProtect
 
 sys.path.append('/usr/local/lib/python3.9/site-packages')
 
 app = Flask(__name__)
+csrf = CSRFProtect(app)
 
 if not app.debug:
   # In production mode, add log handler to sys.stderr.
   app.logger.addHandler(logging.StreamHandler())
   app.logger.setLevel(logging.INFO)
+
+SECRET_KEY = os.urandom(32)
+
+app.config['SECRET_KEY'] = SECRET_KEY
 
 #app.config['SECRET_KEY'] = "hjjlkJJHIGIH6glHGGF"
 #app.config['LDAPserver'] = "192.168.0.20"
