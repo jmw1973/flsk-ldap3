@@ -81,5 +81,13 @@ def checkusergroups():
     #app.logger.info(check)
     return(check)
 
+@app.route('/getallusers')
+def getallusers():
+    allusers = utils.get_all_ldap_users()
+    return allusers
+
 if __name__ == '__main__':
         app.run(host='0.0.0.0', debug=True)
+
+
+

@@ -16,6 +16,8 @@ ADS_UF_NORMAL_ACCOUNT = 512
 ADS_UF_DONT_EXPIRE_PASSWD = 65536
 ADS_UF_PASSWORD_EXPIRED = 8388608
 
+user_exceptions = ['Administrator', 'jmwall', 'krbtgt']
+
 def getEzmeralSourceData():
   # Open the file and load the file
   with open('ezmeral.yaml') as f:
@@ -330,3 +332,34 @@ def checkUserInGroup(userName, groupName):
   else:
       return "USER_NOT_IN_GROUP"
   conn.unbind()
+
+def get_all_ldap_users():
+    
+    # Provide a search base to search for.
+    search_base = app.config.get('baseDom')
+    print(search_base)
+    # provide a uidNumber to search for. '*" to fetch all users/groups
+    search_filter = '(objectClass=user)'
+    users = []
+
+    # Establish connection to the server
+    conn = connect_ldap()
+    print(conn)
+        
+    # only the attributes specified will be returned
+    conn.search(search_base=search_base,       
+                       search_filter=search_filter,
+                       search_scope=SUBTREE, 
+                       attributes=['samAccountName'])
+    # search will not return any values.
+    # the entries method in connection object returns the results 
+    results = conn.entries
+    if results:
+      for user in sorted(results):
+        if user.samAccountName.value not in user_exceptions:
+          users.append(user.samAccountName.value)
+      print(users)
+      return users
+    else:
+      return "none"
+
