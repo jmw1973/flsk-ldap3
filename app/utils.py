@@ -44,9 +44,14 @@ def process_data_file():
       allUsers = get_all_ldap_objects('user')
       allGroups = get_all_ldap_objects('group')
 
+      app.logger.info("------- STARTING input file processing ------")
+      app.logger.info("existing groups in LDAP are: "+str(allGroups))
+      app.logger.info("existing users in LDAP are: "+str(allUsers))
+      
       # iterate through data structure
       for key, value in data["environment"].items():
         print(key)
+        # process groups
         for key, value in value.items():
           print(key) # we have the group
           # checkExistingGroup = search_group(key)
@@ -61,25 +66,22 @@ def process_data_file():
             app.logger.info(addgroup_result)
             print(addgroup_result)
 
+          # process users
           for user in value:
             print(user) # we have a user
             #checkExistingUser = search_user(user)
             if user in allUsers:
               checkExistingUser = "USER_EXISTS"
-            else:
-               checkExistingUser = "USER_NOT_EXISTS"
-   
-            if checkExistingUser == "USER_EXISTS":
               app.logger.info(user + ": is an existing user")
             else:
+              checkExistingUser = "USER_NOT_EXISTS"
               app.logger.info(user + ": is NOT an existing user")
               #print(user + ": is NOT an existing user")
               app.logger.info(user + ": attempting to add user to LDAP")
               adduser_result = add_object(user, user, 'user')
-
               app.logger.info(adduser_result)
               print(adduser_result)
-            checkExistingUser = ""
+      app.logger.info("------- input file processing COMPLETE ------")
       return "201"
 
 
