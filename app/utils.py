@@ -56,11 +56,12 @@ def process_data_file():
         # process groups from file
         for key, value in value.items():
           allGroupsFile.append(key)
+          usersInCurrentGroup = []
           print(key) # we have the group
           # checkExistingGroup = search_group(key)
           if key in allGroupsLDAP:
             checkExistingGroup = "GROUP_EXISTS"
-            app.logger.info(key + ": is an existing Group")
+            app.logger.info(key + ": is an existing Group")           
           else:
             checkExistingGroup = "GROUP_NOT_EXISTS"
             app.logger.info(key + ": is NOT an existing Group in LDAP")
@@ -72,6 +73,7 @@ def process_data_file():
 
           # process users from file
           for user in value:
+            usersInCurrentGroup.append(user)
             allUsersFile.append(user)
             print(user) # we have a user
             #checkExistingUser = search_user(user)
@@ -95,14 +97,31 @@ def process_data_file():
               addusertogroupresult = addUserToGroup(user, key)
               print(addusertogroupresult)
               app.logger.info(addusertogroupresult)
+          print("users in group:  "+key+str(usersInCurrentGroup))
+
+          # now check if user is meant to be in this gorup (if added to another group by mistake - remove
+          if checkExistingGroup == "GROUP_EXISTS": #check if existing group only
+            print("group exists, proceeding to check if user added by mistake to another group")
+            getgroupmembersLDAP = listUsersInGroupLDAP(key)
+            print(getgroupmembersLDAP)
+            for usertest in getgroupmembersLDAP:
+              if usertest not in usersInCurrentGroup:
+                print("user:"+usertest+" is in group: "+key+ " and is not supposed to be, according to input file")
+                print("removing user: "+usertest+" from group: "+key)
+                app.logger.info("user:"+usertest+" is in group: "+key+ " and is not supposed to be, according to input file")
+                app.logger.info("removing user: "+usertest+" from group: "+key)
+                remuserfromgroup = removeUserFromGroup(usertest, key)
+                app.logger.info(remuserfromgroup)
+
             
       print("allGroupsFile: "+str(allGroupsFile))
       print("allUsersFile: "+str(allUsersFile))
       app.logger.info("existing groups in input file are: "+str(allGroupsFile))
       app.logger.info("existing users in input file are: "+str(allUsersFile))
 
-      # we now have alist of all users\groups in file and LDAP, going to compare to see if we need to delete any users\groups
+      
 
+      # we now have alist of all users\groups in file and LDAP, going to compare to see if we need to delete any users\groups
       for user in allUsersLDAP:
         if user not in allUsersFile:
           #del user
@@ -120,11 +139,9 @@ def process_data_file():
           delgroup_result = delete_object(group)
           print(delgroup_result)
           app.logger.info(delgroup_result)
-
-      
+    
       app.logger.info("------- input file processing COMPLETE ------")
       return "201"
-
 
 
 def connect_ldap():
@@ -328,18 +345,18 @@ def modify_user_attribute(userdn, attribute, newattributevalue):
   return 0
 
 
-def listUsersInGroup(groupName):
+def listUsersInGroupLDAP(groupName):
   groupmembers = []
   conn = connect_ldap()
-  conn.search('cn='+groupName+','+app.config.get('baseDom'), '(objectClass=group)', 'SUBTREE', attributes = ['member'])
+  conn.search('CN='+groupName+','+app.config.get('baseDN'), '(objectClass=group)', 'SUBTREE', attributes = ['member'])
   result = conn.entries
   print('The ' + groupName + ' Member Lists:')
   for en in result:
     for member in en.member.values:
       member = member.split(',')
-      print(member[0].replace('CN=',''))
+      #print(member[0].replace('CN=',''))
       groupmembers.append(member[0].replace('CN=',''))
-  print(groupmembers)
+  #print(groupmembers)
   conn.unbind()
   return groupmembers
 
@@ -363,10 +380,10 @@ def addUserToGroup(userName, groupName):
   return response
   conn.unbind()
 
-def delUserFromGroup(self, userName, groupName):
+def removeUserFromGroup(userName, groupName):
   conn = connect_ldap()
   response = ''
-  conn.search(search_base = app.config.get('baseDom'), search_filter = '(&(objectclass=person)(cn=' + userName + '*))', search_scope='SUBTREE', attributes = ['*'])
+  conn.search(search_base = app.config.get('baseDom'), search_filter = '(&(objectclass=person)(CN=' + userName + '*))', search_scope='SUBTREE', attributes = ['*'])
   result = conn.entries
   getDn = result[0].distinguishedName
   getDn = str(getDn)
@@ -375,8 +392,8 @@ def delUserFromGroup(self, userName, groupName):
   delResult = conn.entries
   print(delResult)
   if delResult == [ ]:
-    print('Successfully Deleted: ' + userName + ' From ' + groupName + ' !')
-    response = ('Success Deleted ' + userName + ' From ' + groupName + ' !')
+    print('Successfully removed: ' + userName + ' From ' + groupName + ' !')
+    response = conn.result
   else:
     print('Delete Error')
     response = 'Delete Error'
