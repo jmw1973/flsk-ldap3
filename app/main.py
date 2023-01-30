@@ -77,7 +77,7 @@ def processDataFile():
 
 @app.route('/checkuseringroup')
 def checkusergroups():
-    check = utils.checkUserInGroup('gogo3', 'CSC-AGENT')
+    check = utils.checkUserInGroup('tg3user1', 'tg3_users')
     #app.logger.info(check)
     return(check)
 
@@ -90,6 +90,12 @@ def getallusers():
 def getallgroups():
     allgroups = utils.get_all_ldap_objects('group')
     return allgroups
+
+@app.route('/getallusersingroup') #test
+def getallusersingroup():
+    allusersingroup = utils.listUsersInGroup('tg3_users')
+    return allusersingroup
+
 
 if __name__ == '__main__':
         app.run(host='0.0.0.0', debug=True)

@@ -6,7 +6,7 @@ app.config['LDAPserver'] = "192.168.1.79"
 app.config['LDAPuser'] = "samdom\\administrator"
 #app.config['LDAPpassword'] = "5ambaPwd@"
 app.config['LDAPpassword'] = "Yi1se@i^h0"
-app.config['baseDN'] = "cn=users,dc=samdom,dc=example,dc=com"
-app.config['baseDom'] = "dc=samdom,dc=example,dc=com"
+app.config['baseDN'] = "CN=users,DC=samdom,DC=example,DC=com"
+app.config['baseDom'] = "DC=samdom,DC=example,DC=com"
 #app.config['SECRET_KEY'] = 'hjjlkJJHIGIH6glHGGF'
 app.config['DEBUG_LOGGING'] = 1

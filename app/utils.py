@@ -1,7 +1,7 @@
 import yaml
 from main import app
 from yaml.loader import SafeLoader
-from ldap3 import Server, Connection, SIMPLE, SUBTREE, ALL, MODIFY_REPLACE, HASHED_SALTED_SHA
+from ldap3 import Server, Connection, SIMPLE, SUBTREE, ALL, MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE, HASHED_SALTED_SHA
 from ldap3.utils.hashed import hashed
 import logging, secrets, string
 
@@ -41,46 +41,87 @@ def print_values():
 
 def process_data_file():
       data = getEzmeralSourceData()
-      allUsers = get_all_ldap_objects('user')
-      allGroups = get_all_ldap_objects('group')
+      allUsersFile = []
+      allGroupsFile = []
+      allUsersLDAP = get_all_ldap_objects('user')
+      allGroupsLDAP = get_all_ldap_objects('group')
 
       app.logger.info("------- STARTING input file processing ------")
-      app.logger.info("existing groups in LDAP are: "+str(allGroups))
-      app.logger.info("existing users in LDAP are: "+str(allUsers))
+      app.logger.info("existing groups in LDAP are: "+str(allGroupsLDAP))
+      app.logger.info("existing users in LDAP are: "+str(allUsersLDAP))
       
       # iterate through data structure
       for key, value in data["environment"].items():
         print(key)
-        # process groups
+        # process groups from file
         for key, value in value.items():
+          allGroupsFile.append(key)
           print(key) # we have the group
           # checkExistingGroup = search_group(key)
-          if key in allGroups:
+          if key in allGroupsLDAP:
             checkExistingGroup = "GROUP_EXISTS"
             app.logger.info(key + ": is an existing Group")
           else:
             checkExistingGroup = "GROUP_NOT_EXISTS"
-            app.logger.info(key + ": is NOT an existing Group")
+            app.logger.info(key + ": is NOT an existing Group in LDAP")
             app.logger.info(key + ": attempting to add group to LDAP")
             addgroup_result = add_object(key, key, 'group')
             app.logger.info(addgroup_result)
             print(addgroup_result)
+               
 
-          # process users
+          # process users from file
           for user in value:
+            allUsersFile.append(user)
             print(user) # we have a user
             #checkExistingUser = search_user(user)
-            if user in allUsers:
+            if user in allUsersLDAP:
               checkExistingUser = "USER_EXISTS"
               app.logger.info(user + ": is an existing user")
             else:
               checkExistingUser = "USER_NOT_EXISTS"
-              app.logger.info(user + ": is NOT an existing user")
+              app.logger.info(user + ": is NOT an existing user in LDAP")
               #print(user + ": is NOT an existing user")
               app.logger.info(user + ": attempting to add user to LDAP")
               adduser_result = add_object(user, user, 'user')
               app.logger.info(adduser_result)
               print(adduser_result)
+            
+            # now we need to add user to group
+            checkuseringroup = checkUserInGroup(user, key)
+            if checkuseringroup == "USER_NOT_IN_GROUP":
+              app.logger.info(user + ": is NOT an existing member of: "+key)
+              app.logger.info(user + ": attempting to add user to: "+key)
+              addusertogroupresult = addUserToGroup(user, key)
+              print(addusertogroupresult)
+              app.logger.info(addusertogroupresult)
+            
+      print("allGroupsFile: "+str(allGroupsFile))
+      print("allUsersFile: "+str(allUsersFile))
+      app.logger.info("existing groups in input file are: "+str(allGroupsFile))
+      app.logger.info("existing users in input file are: "+str(allUsersFile))
+
+      # we now have alist of all users\groups in file and LDAP, going to compare to see if we need to delete any users\groups
+
+      for user in allUsersLDAP:
+        if user not in allUsersFile:
+          #del user
+          app.logger.info(user + ": is an existing user in LDAP but not in input file")
+          app.logger.info(user + ": attempting to delete user from LDAP")
+          deluser_result = delete_object(user)
+          print(deluser_result)
+          app.logger.info(deluser_result)
+
+      for group in allGroupsLDAP:
+        if group not in allGroupsFile:
+          #del user
+          app.logger.info(group + ": is an existing group in LDAP but not in input file")
+          app.logger.info(group + ": attempting to delete group from LDAP")
+          delgroup_result = delete_object(group)
+          print(delgroup_result)
+          app.logger.info(delgroup_result)
+
+      
       app.logger.info("------- input file processing COMPLETE ------")
       return "201"
 
@@ -236,7 +277,7 @@ def process_user(userid):
         conn.unbind()
         return "ACCOUNT_NOT_EXISTS"
 
-def add_object(userid, sAMAccountName, objclass):
+def add_object(id, sAMAccountName, objclass):
       conn = connect_ldap()
       object_class = objclass
       attr = {
@@ -245,8 +286,18 @@ def add_object(userid, sAMAccountName, objclass):
               #'sn': sn
               }
 
-      userdn = "cn=" + userid + "," + app.config.get('baseDN')
-      conn.add(userdn, object_class, attr)
+      dn = "cn=" + id + "," + app.config.get('baseDN')
+      conn.add(dn, object_class, attr)
+      # add_user('mytestuser', 'mytestuser', 'John', 'Doe')
+      result = conn.result
+      conn.unbind()
+      return result
+
+def delete_object(objid):
+      conn = connect_ldap()
+
+      dn = "cn=" + objid + "," + app.config.get('baseDN')
+      conn.delete(dn)
       # add_user('mytestuser', 'mytestuser', 'John', 'Doe')
       result = conn.result
       conn.unbind()
@@ -278,6 +329,7 @@ def modify_user_attribute(userdn, attribute, newattributevalue):
 
 
 def listUsersInGroup(groupName):
+  groupmembers = []
   conn = connect_ldap()
   conn.search('cn='+groupName+','+app.config.get('baseDom'), '(objectClass=group)', 'SUBTREE', attributes = ['member'])
   result = conn.entries
@@ -286,7 +338,10 @@ def listUsersInGroup(groupName):
     for member in en.member.values:
       member = member.split(',')
       print(member[0].replace('CN=',''))
+      groupmembers.append(member[0].replace('CN=',''))
+  print(groupmembers)
   conn.unbind()
+  return groupmembers
 
 
 def addUserToGroup(userName, groupName):
@@ -296,15 +351,15 @@ def addUserToGroup(userName, groupName):
   result = conn.entries
   getDn = result[0].distinguishedName
   getDn = str(getDn)
-  group = 'cn='+ groupName +','+app.config.get('baseDom')
+  group = 'CN='+groupName+','+app.config.get('baseDN')
   conn.modify(dn=group, changes={'member': [(MODIFY_ADD, [getDn])]})
   addResult = conn.entries
   if addResult == [ ]:
-    print('Already Add ' + userName + ' To ' + groupName)
-    response = ('Already Add ' + userName + ' To ' + groupName)
+    print('Successfully added: ' + userName + ' To ' + groupName)
+    response = conn.result
   else:
-    print('SomeThing Error')
-    response = 'Error Please Check It!'
+    print('Add Error')
+    response = 'Error adding: ' + userName + ' To ' + groupName
   return response
   conn.unbind()
 
@@ -315,14 +370,15 @@ def delUserFromGroup(self, userName, groupName):
   result = conn.entries
   getDn = result[0].distinguishedName
   getDn = str(getDn)
-  group = 'cn='+ groupName +','+app.config.get('baseDom')
+  group = 'CN='+groupName+','+app.config.get('baseDN')
   conn.modify(dn=group, changes={'member': [(MODIFY_DELETE, [getDn])]})
   delResult = conn.entries
+  print(delResult)
   if delResult == [ ]:
-    print('Already Deleted ' + userName + ' From ' + groupName + ' !')
-    response = ('Already Deleted ' + userName + ' From ' + groupName + ' !')
+    print('Successfully Deleted: ' + userName + ' From ' + groupName + ' !')
+    response = ('Success Deleted ' + userName + ' From ' + groupName + ' !')
   else:
-    print('Got Error')
+    print('Delete Error')
     response = 'Delete Error'
   return response
   conn.unbind()
@@ -365,7 +421,7 @@ def get_all_ldap_objects(objclass):
     conn.search(search_base=search_base,       
                        search_filter=search_filter,
                        search_scope=SUBTREE, 
-                       attributes=['samAccountName'])
+                       attributes=['samAccountName', 'cn'])
     # search will not return any values.
     # the entries method in connection object returns the results 
     results = conn.entries
@@ -377,7 +433,7 @@ def get_all_ldap_objects(objclass):
               allobjects.append(obj.samAccountName.value)
           case 'group':
             if obj.samAccountName.value not in group_exceptions:
-              allobjects.append(obj.samAccountName.value)
+              allobjects.append(obj.cn.value)
       print(allobjects)
       return allobjects
     else:
