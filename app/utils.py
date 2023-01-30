@@ -16,7 +16,9 @@ ADS_UF_NORMAL_ACCOUNT = 512
 ADS_UF_DONT_EXPIRE_PASSWD = 65536
 ADS_UF_PASSWORD_EXPIRED = 8388608
 
-user_exceptions = ['Administrator', 'jmwall', 'krbtgt']
+user_exceptions = ['Administrator', 'jmwall', 'krbtgt', 'gogo', 'DC6F8A3E844D$', 'Guest', 'dns-dc6f8a3e844d', 'gogo2', 'gogo3', 'gogo4', '$15AFADE1-79E3750BCF8BFC18']
+
+group_exceptions =['Account Operators', 'Administrators', 'Allowed RODC Password Replication Group', 'Backup Operators', 'CSC-ADMIN', 'CSC-AGENT', 'CSC-COMPLIANCE', 'CSC-MANAGER', 'Cert Publishers', 'Certificate Service DCOM Access', 'Cryptographic Operators', 'Denied RODC Password Replication Group', 'Distributed COM Users', 'DnsAdmins', 'DnsUpdateProxy', 'Domain Admins', 'Domain Computers', 'Domain Controllers', 'Domain Guests', 'Domain Users', 'Enterprise Admins', 'Enterprise Read-Only Domain Controllers', 'Event Log Readers', 'Group Policy Creator Owners', 'Guests', 'IIS_IUSRS', 'Incoming Forest Trust Builders', 'Network Configuration Operators', 'Performance Log Users', 'Performance Monitor Users', 'Pre-Windows 2000 Compatible Access', 'Print Operators', 'RAS and IAS Servers', 'Read-Only Domain Controllers', 'Remote Desktop Users', 'Replicator', 'Schema Admins', 'Server Operators', 'Terminal Server License Servers', 'Users', 'Windows Authorization Access Group']
 
 def getEzmeralSourceData():
   # Open the file and load the file
@@ -39,24 +41,34 @@ def print_values():
 
 def process_data_file():
       data = getEzmeralSourceData()
+      allUsers = get_all_ldap_objects('user')
+      allGroups = get_all_ldap_objects('group')
 
       # iterate through data structure
       for key, value in data["environment"].items():
         print(key)
         for key, value in value.items():
           print(key) # we have the group
-          checkExistingGroup = search_group(key)
-          if checkExistingGroup == "GROUP_EXISTS":
-              app.logger.info(key + ": is an existing Group")
+          # checkExistingGroup = search_group(key)
+          if key in allGroups:
+            checkExistingGroup = "GROUP_EXISTS"
+            app.logger.info(key + ": is an existing Group")
           else:
-              app.logger.info(key + ": is NOT an existing Group")
-              app.logger.info(key + ": attempting to add group to LDAP")
-              addgroup_result = add_object(key, key, 'group')
-              app.logger.info(addgroup_result)
-              print(addgroup_result)
+            checkExistingGroup = "GROUP_NOT_EXISTS"
+            app.logger.info(key + ": is NOT an existing Group")
+            app.logger.info(key + ": attempting to add group to LDAP")
+            addgroup_result = add_object(key, key, 'group')
+            app.logger.info(addgroup_result)
+            print(addgroup_result)
+
           for user in value:
             print(user) # we have a user
-            checkExistingUser = search_user(user)
+            #checkExistingUser = search_user(user)
+            if user in allUsers:
+              checkExistingUser = "USER_EXISTS"
+            else:
+               checkExistingUser = "USER_NOT_EXISTS"
+   
             if checkExistingUser == "USER_EXISTS":
               app.logger.info(user + ": is an existing user")
             else:
@@ -64,6 +76,7 @@ def process_data_file():
               #print(user + ": is NOT an existing user")
               app.logger.info(user + ": attempting to add user to LDAP")
               adduser_result = add_object(user, user, 'user')
+
               app.logger.info(adduser_result)
               print(adduser_result)
             checkExistingUser = ""
@@ -221,9 +234,9 @@ def process_user(userid):
         conn.unbind()
         return "ACCOUNT_NOT_EXISTS"
 
-def add_object(userid, sAMAccountName, obj_class):
+def add_object(userid, sAMAccountName, objclass):
       conn = connect_ldap()
-      object_class = obj_class
+      object_class = objclass
       attr = {
               'sAMAccountName': sAMAccountName,
               #'givenName': givenName,
@@ -333,14 +346,14 @@ def checkUserInGroup(userName, groupName):
       return "USER_NOT_IN_GROUP"
   conn.unbind()
 
-def get_all_ldap_users():
+def get_all_ldap_objects(objclass):
     
     # Provide a search base to search for.
     search_base = app.config.get('baseDom')
     print(search_base)
     # provide a uidNumber to search for. '*" to fetch all users/groups
-    search_filter = '(objectClass=user)'
-    users = []
+    search_filter = '(objectClass='+objclass+')'
+    allobjects = []
 
     # Establish connection to the server
     conn = connect_ldap()
@@ -355,11 +368,16 @@ def get_all_ldap_users():
     # the entries method in connection object returns the results 
     results = conn.entries
     if results:
-      for user in sorted(results):
-        if user.samAccountName.value not in user_exceptions:
-          users.append(user.samAccountName.value)
-      print(users)
-      return users
+      for obj in sorted(results):
+        match objclass:
+          case 'user':
+            if obj.samAccountName.value not in user_exceptions:
+              allobjects.append(obj.samAccountName.value)
+          case 'group':
+            if obj.samAccountName.value not in group_exceptions:
+              allobjects.append(obj.samAccountName.value)
+      print(allobjects)
+      return allobjects
     else:
       return "none"
 

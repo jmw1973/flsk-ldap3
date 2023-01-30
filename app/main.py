@@ -81,10 +81,15 @@ def checkusergroups():
     #app.logger.info(check)
     return(check)
 
-@app.route('/getallusers')
+@app.route('/getallusers') #test
 def getallusers():
-    allusers = utils.get_all_ldap_users()
+    allusers = utils.get_all_ldap_objects('user')
     return allusers
+
+@app.route('/getallgroups') #test
+def getallgroups():
+    allgroups = utils.get_all_ldap_objects('group')
+    return allgroups
 
 if __name__ == '__main__':
         app.run(host='0.0.0.0', debug=True)
