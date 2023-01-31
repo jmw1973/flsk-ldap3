@@ -64,11 +64,23 @@ def auth():
     return "User was not authenticated!"
 
 
-@app.route('/requestAccount',methods=['GET', 'POST'])
+@app.route('/requestAccount', methods=['GET', 'POST'])
 def requestAccount():
     # todo check jwt token is valid and extract username
     form = forms.SignupForm()
     return render_template('requestAccount.jinja2', form=form, title="Request Account")
+
+@app.route('/submitRequestAccountForm', methods=['POST'])
+def submitRequestAccountForm():
+   logonName = request.form['logonName']
+   tenantName = request.form['tenantName']
+   otherInfo = request.form['otherInfo']
+
+   print(logonName)
+   print(tenantName)
+   print(otherInfo)
+
+   return "201"
 
 @app.route('/processDataFile')
 def processDataFile():

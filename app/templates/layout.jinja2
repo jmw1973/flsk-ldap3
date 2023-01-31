@@ -31,9 +31,13 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="/.github/flask-wtforms-tutorial@2x.jpg" />
 
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="{{
-    url_for('static', filename='jquery.js') }}">\x3C/script>'ipt>
+    <script src="{{ url_for('static', filename='lib/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/jAlert.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/jAlert-functions.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.js"></script>
+
 
     {# Styles #}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" type="text/css">
