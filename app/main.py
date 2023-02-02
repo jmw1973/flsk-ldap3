@@ -22,15 +22,6 @@ SECRET_KEY = os.urandom(32)
 
 app.config['SECRET_KEY'] = SECRET_KEY
 
-#app.config['SECRET_KEY'] = "hjjlkJJHIGIH6glHGGF"
-#app.config['LDAPserver'] = "192.168.0.20"
-#app.config['LDAPuser'] = "samdom\\administrator"
-#app.config['LDAPpassword'] = "Yi1se@i^h0"
-#app.config['baseDN'] = "cn=users,dc=samdom,dc=example,dc=com"
-#app.config['baseDom'] = "dc=samdom,dc=example,dc=com"
-#app.config['DEBUG_LOGGING'] = 1
-
-
 @app.route('/healthz')
 def healtcheck():
   return "200"
@@ -79,6 +70,8 @@ def submitRequestAccountForm():
    print(logonName)
    print(tenantName)
    print(otherInfo)
+
+   app.logger.info("ACCOUNT REQUEST SUBMITTED: LogonName: " +logonName+" Tenant: "+tenantName+" OtherInfo: "+otherInfo)
 
    return "201"
 

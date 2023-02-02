@@ -23,10 +23,32 @@
     <script>
     $(function() {
         $('#submitbtnRequestAccount').click(function() {
+
+                $(".error").remove();
+                var validationerror=0;
+
+                var name = $('#logonname').val();
+                if (name.length < 1) {
+                $('#logonname').after('<span style="color:red;">This field is required</span>');
+                validationerror=1;
+                }
+
+                var tenantname = $('#tenant').val();
+                if (tenantname.length < 1) {
+                $('#tenant').after('<span style="color:red;">This field is required</span>');
+                validationerror=1;
+                }
+             
+
+                if (validationerror==1) {
+                return false;
+                }
+
                 console.log('im in submit');
                 console.log($('#logonname').val());
                 console.log($('#tenant').val());
                 console.log($('#otherinfo').val());
+
 
                 $.ajax({
                 url: '/submitRequestAccountForm',
@@ -37,10 +59,16 @@
                        },
                 type: 'POST',
                 success: function(response) {
-                       $.alert({
-                       title: 'Alert!',
-                       content: 'Simple alert!',
-                       });
+                       $.confirm({
+                          title: 'Account Request Successful!',
+                          content: 'An Administrator will be in contact soon',
+                          buttons: {
+                              OK: {
+                                confirm: 'OK',
+                                btnClass: 'btn-blue', 
+                              },
+                          }
+                      });
 
                 },
 
