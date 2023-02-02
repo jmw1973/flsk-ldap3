@@ -75,8 +75,12 @@ form {
 													        border-top: 20px solid #f00;
 													}
 
+													input.readonly[type="text"] {
+														background-color: #faf6f8;
+													}
+
 													input[type="text"]::placeholder {
-														  color: #d4d9e3;
+														  color: rgb(173, 178, 180);
 													  }
 
 													  input[type="text"]:hover,

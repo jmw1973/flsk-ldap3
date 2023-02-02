@@ -77,11 +77,10 @@
 
     <div class="form-wrapper">
       <h2 class="title">Request Account</h2>
-
-
+      
           {{ form.csrf_token }}
 
-          <fieldset class="form-field">{{ form.logonname.label }} {{ form.logonname }}
+          <fieldset class="form-field">{{ form.logonname.label }} {{ form.logonname(class_="readonly") }}
             {% if form.logonname.errors %}
               <ul class="errors">
                 {% for error in form.logonname.errors %}
