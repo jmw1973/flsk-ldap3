@@ -20,8 +20,8 @@ class SignupForm(FlaskForm):
           [DataRequired()],
           choices=[
                ("Pit1", "pit1"),
-               ("Tenanttest1", "tenanttest1"),
-               ("Tenanttest2", "tenanttest2"),
+               ("Tenant1", "tenant1"),
+               ("Tenant2", "tenant2"),
                                                                                                                                   ],
                                                             )
   otherinfo = StringField("Other Info")

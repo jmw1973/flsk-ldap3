@@ -1,7 +1,8 @@
 from flask import Flask, request, redirect, render_template, url_for
 from app import app
 from ldap3 import Server, Connection, SIMPLE, SUBTREE, ALL, MODIFY_REPLACE
-import jwt, requests, base64, json, getpass, sys, os
+import jwt
+import requests, base64, json, getpass, sys, os
 import logging, secrets, string
 from ldap3 import (HASHED_SALTED_SHA, MODIFY_REPLACE)
 from ldap3.utils.hashed import hashed
@@ -22,6 +23,11 @@ SECRET_KEY = os.urandom(32)
 
 app.config['SECRET_KEY'] = SECRET_KEY
 
+user_account_name = "testuser2" # test for now
+
+region = 'eu-west-2'
+jwt_token = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjEyMzQ1Njc4LTEyMzQtMTIzNC0xMjM0LTEyMzQ1Njc4OTAxMiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiZW1haWwiOiJqb2huMTU5OTlAdGVzdC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.sscGxWF8WncETBGsACLFvJwDhbWHr0Z3la3Be3VP1uGwh1w76-ho2JkH2nG0KnVSm-sPMRDmVghP_S26vpfSiQ" # test
+
 @app.route('/healthz')
 def healtcheck():
   return "200"
@@ -29,9 +35,6 @@ def healtcheck():
 @app.route('/')
 def auth():
   headers_dict = request.__dict__
-  region = 'eu-west-2'
-  jwt_token = "787655" # dummy for now
-  user_account_name = "testuser2" # test for now
 
   if jwt_token:
     app.logger.info(user_account_name + ": user has authenticated ok: now checking if they have an existing account")
@@ -59,7 +62,7 @@ def auth():
 def requestAccount():
     # todo check jwt token is valid and extract username
     form = forms.SignupForm()
-    return render_template('requestAccount.jinja2', form=form, title="Request Account")
+    return render_template('requestAccount.jinja2', form=form, userlogonname=user_account_name, title="Request Account")
 
 @app.route('/submitRequestAccountForm', methods=['POST'])
 def submitRequestAccountForm():
@@ -67,12 +70,7 @@ def submitRequestAccountForm():
    tenantName = request.form['tenantName']
    otherInfo = request.form['otherInfo']
 
-   print(logonName)
-   print(tenantName)
-   print(otherInfo)
-
    app.logger.info("ACCOUNT REQUEST SUBMITTED: LogonName: " +logonName+" Tenant: "+tenantName+" OtherInfo: "+otherInfo)
-
    return "201"
 
 @app.route('/processDataFile')
@@ -102,8 +100,19 @@ def getallusersingroup():
     return allusersingroup
 
 
+@app.route('/getkid') #test
+def getkid():
+  kid = utils.get_kid(jwt_token)
+  return kid
+
+@app.route('/testpayload') #test
+def testpayload():
+  payload = utils.test_payload(jwt_token)
+  return payload
+
+
 if __name__ == '__main__':
-        app.run(host='0.0.0.0', debug=True)
+  app.run(host='0.0.0.0', debug=True)
 
 
 

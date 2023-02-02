@@ -4,6 +4,10 @@ from yaml.loader import SafeLoader
 from ldap3 import Server, Connection, SIMPLE, SUBTREE, ALL, MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE, HASHED_SALTED_SHA
 from ldap3.utils.hashed import hashed
 import logging, secrets, string
+import base64
+import json
+import jwt
+import requests
 
 # LDAP userAccountControl properties
 ADS_UF_ACCOUNT_DISABLE = 2
@@ -456,3 +460,59 @@ def get_all_ldap_objects(objclass):
     else:
       return "none"
 
+def get_key(region):
+  
+  """
+    Fetch the public key for the JWT signature from AWS key servers.
+    This is the only external dependency for this script, so we time it
+    : gets kid during this script, rather than using get_kid()
+    :return: Public Key string
+    :rtype: string
+  """
+
+  # Step 1: Get the key id from JWT headers (the kid field)
+  encoded_jwt = headers.dict['x-amzn-oidc-data']
+  jwt_headers = encoded_jwt.split('.')[0]
+  decoded_jwt_headers = base64.b64decode(jwt_headers)
+  decoded_jwt_headers = decoded_jwt_headers.decode("utf-8")
+  decoded_json = json.loads(decoded_jwt_headers)
+  kid = decoded_json['kid']
+
+  # Step 2: Get the public key from regional endpoint
+  url = 'https://public-keys.auth.elb.' + region + '.amazonaws.com/' + kid
+  req = requests.get(url)
+
+  pub_key = req.text
+
+  # Step 3: Get the payload
+  payload = jwt.decode(encoded_jwt, pub_key, algorithms=['ES256'])
+
+
+def get_kid(encoded_jwt):
+    """
+    Extract the Key ID from the JWT Token
+    Header is base64 encoded JSON strings
+    <jwt_info>.<profile_data>.<signature>
+    :return: key id extracted from header
+    :rtype: string
+    """
+    try:
+        jwt_headers = encoded_jwt.split('.')[0]
+        decoded_jwt_headers = base64.b64decode(jwt_headers)
+        decoded_json = json.loads(decoded_jwt_headers)
+        return decoded_json['kid']
+    except KeyError:
+        print('error.validate.missing_kid')
+        #log.error('Missing kid in decoded json jwt',
+        #extra={'SID': SID, 'RID': RID})
+
+def test_payload(encoded_jwt):
+  # below pub_key was key used to sign the test jwt_token
+  pub_key = """-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+uQbTjL3chynL4wXgUg2R9q9UU8I5mEovUf86QZ7kOBIjJwqnzD1omageEHWwHdBO6B+dFabmdT9POxg==\n-----END PUBLIC KEY-----"""
+
+  payload = jwt.decode(encoded_jwt, pub_key, algorithms=['ES256'])
+  userlogonname = payload.get('email').split('@')[0]
+
+  return userlogonname
+
+  

@@ -8,6 +8,14 @@
         type="text/css"
     />
 
+
+    <script>
+      $(document).ready(function() {
+        $('#logonname').val('{{ userlogonname }}');
+        $('#logonname').attr('readonly', true);
+      });
+    </script>
+
     <script type="text/javascript">
       var csrf_token = "{{ csrf_token() }}";
 
@@ -24,36 +32,15 @@
     $(function() {
         $('#submitbtnRequestAccount').click(function() {
 
-                $(".error").remove();
-                var validationerror=0;
-
-                var name = $('#logonname').val();
-                if (name.length < 1) {
-                $('#logonname').after('<span style="color:red;">This field is required</span>');
-                validationerror=1;
-                }
-
-                var tenantname = $('#tenant').val();
-                if (tenantname.length < 1) {
-                $('#tenant').after('<span style="color:red;">This field is required</span>');
-                validationerror=1;
-                }
-             
-
-                if (validationerror==1) {
-                return false;
-                }
-
                 console.log('im in submit');
                 console.log($('#logonname').val());
                 console.log($('#tenant').val());
                 console.log($('#otherinfo').val());
 
-
                 $.ajax({
                 url: '/submitRequestAccountForm',
                 data : {
-                 logonName : $('#logonname').val(),
+                 logonName : '{{ userlogonname }}',
                  tenantName: $('#tenant').val(),
                  otherInfo: $('#otherinfo').val(),
                        },
