@@ -28,15 +28,13 @@
       });
     </script>
 
-    <script>
-    $(function() {
+ <script>
+ $(function() {
         $('#submitbtnRequestAccount').click(function() {
-
                 console.log('im in submit');
                 console.log($('#logonname').val());
                 console.log($('#tenant').val());
                 console.log($('#otherinfo').val());
-
                 $.ajax({
                 url: '/submitRequestAccountForm',
                 data : {
@@ -52,13 +50,13 @@
                           buttons: {
                               OK: {
                                 confirm: 'OK',
-                                btnClass: 'btn-blue', 
+                                btnClass: 'btn-blue',
+                                action: function() { window.location.href = "/closePage"; },        
                               },
+
                           }
                       });
-
                 },
-
                  error: function (request, status, error) {
                     $.alert({
                       'title': 'Error!',

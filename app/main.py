@@ -58,6 +58,12 @@ def auth():
     return "User was not authenticated!"
 
 
+@app.route('/closePage', methods=['GET'])
+def closepage():
+    form = forms.closePage()
+    return render_template('closepage.jinja2', form=form, title="Close Page")
+
+
 @app.route('/requestAccount', methods=['GET', 'POST'])
 def requestAccount():
     # todo check jwt token is valid and extract username

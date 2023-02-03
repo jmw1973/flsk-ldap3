@@ -26,3 +26,6 @@ class SignupForm(FlaskForm):
                                                             )
   otherinfo = StringField("Other Info")
   submit = SubmitField("Submit")
+
+class closePage(FlaskForm):
+  """ message for user to close page """

@@ -14,3 +14,9 @@ environment:
     tg3_users:
       - tg3user1
       - tg3user2
+  ecc1:
+    ecc1_admins:
+      - ecc1_admin1
+      - ecc1_admin2
+    ecc1_users:
+      - ecc1_user1
