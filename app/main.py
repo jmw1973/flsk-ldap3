@@ -105,7 +105,6 @@ def getallusersingroup():
     allusersingroup = utils.listUsersInGroup('tg3_users')
     return allusersingroup
 
-
 @app.route('/getkid') #test
 def getkid():
   kid = utils.get_kid(jwt_token)

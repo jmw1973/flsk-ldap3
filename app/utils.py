@@ -56,13 +56,11 @@ def process_data_file():
       
       # iterate through data structure
       for key, value in data["environment"].items():
-        print(key)
         # process groups from file
         for key, value in value.items():
           allGroupsFile.append(key)
           usersInCurrentGroup = []
-          print(key) # we have the group
-          # checkExistingGroup = search_group(key)
+          #print(key) # we have the group
           if key in allGroupsLDAP:
             checkExistingGroup = "GROUP_EXISTS"
             app.logger.info(key + ": is an existing Group")           
@@ -72,15 +70,12 @@ def process_data_file():
             app.logger.info(key + ": attempting to add group to LDAP")
             addgroup_result = add_object(key, key, 'group')
             app.logger.info(addgroup_result)
-            print(addgroup_result)
-               
 
           # process users from file
           for user in value:
             usersInCurrentGroup.append(user)
             allUsersFile.append(user)
-            print(user) # we have a user
-            #checkExistingUser = search_user(user)
+            # we have a user
             if user in allUsersLDAP:
               checkExistingUser = "USER_EXISTS"
               app.logger.info(user + ": is an existing user")
@@ -91,7 +86,6 @@ def process_data_file():
               app.logger.info(user + ": attempting to add user to LDAP")
               adduser_result = add_object(user, user, 'user')
               app.logger.info(adduser_result)
-              print(adduser_result)
             
             # now we need to add user to group
             checkuseringroup = checkUserInGroup(user, key)
@@ -99,31 +93,27 @@ def process_data_file():
               app.logger.info(user + ": is NOT an existing member of: "+key)
               app.logger.info(user + ": attempting to add user to: "+key)
               addusertogroupresult = addUserToGroup(user, key)
-              print(addusertogroupresult)
               app.logger.info(addusertogroupresult)
-          print("users in group:  "+key+str(usersInCurrentGroup))
+          #print("users in group:  "+key+str(usersInCurrentGroup))
 
           # now check if user is meant to be in this gorup (if added to another group by mistake - remove
           if checkExistingGroup == "GROUP_EXISTS": #check if existing group only
-            print("group exists, proceeding to check if user added by mistake to another group")
+            #print("group exists, proceeding to check if user added by mistake to another group")
             getgroupmembersLDAP = listUsersInGroupLDAP(key)
-            print(getgroupmembersLDAP)
             for usertest in getgroupmembersLDAP:
               if usertest not in usersInCurrentGroup:
-                print("user:"+usertest+" is in group: "+key+ " and is not supposed to be, according to input file")
-                print("removing user: "+usertest+" from group: "+key)
+                #print("user:"+usertest+" is in group: "+key+ " and is not supposed to be, according to input file")
+                #print("removing user: "+usertest+" from group: "+key)
                 app.logger.info("user:"+usertest+" is in group: "+key+ " and is not supposed to be, according to input file")
                 app.logger.info("removing user: "+usertest+" from group: "+key)
                 remuserfromgroup = removeUserFromGroup(usertest, key)
                 app.logger.info(remuserfromgroup)
 
             
-      print("allGroupsFile: "+str(allGroupsFile))
-      print("allUsersFile: "+str(allUsersFile))
+      #print("allGroupsFile: "+str(allGroupsFile))
+      #print("allUsersFile: "+str(allUsersFile))
       app.logger.info("existing groups in input file are: "+str(allGroupsFile))
       app.logger.info("existing users in input file are: "+str(allUsersFile))
-
-      
 
       # we now have alist of all users\groups in file and LDAP, going to compare to see if we need to delete any users\groups
       for user in allUsersLDAP:
@@ -132,7 +122,6 @@ def process_data_file():
           app.logger.info(user + ": is an existing user in LDAP but not in input file")
           app.logger.info(user + ": attempting to delete user from LDAP")
           deluser_result = delete_object(user)
-          print(deluser_result)
           app.logger.info(deluser_result)
 
       for group in allGroupsLDAP:
@@ -141,7 +130,6 @@ def process_data_file():
           app.logger.info(group + ": is an existing group in LDAP but not in input file")
           app.logger.info(group + ": attempting to delete group from LDAP")
           delgroup_result = delete_object(group)
-          print(delgroup_result)
           app.logger.info(delgroup_result)
     
       app.logger.info("------- input file processing COMPLETE ------")
@@ -394,12 +382,12 @@ def removeUserFromGroup(userName, groupName):
   group = 'CN='+groupName+','+app.config.get('baseDN')
   conn.modify(dn=group, changes={'member': [(MODIFY_DELETE, [getDn])]})
   delResult = conn.entries
-  print(delResult)
+  #print(delResult)
   if delResult == [ ]:
-    print('Successfully removed: ' + userName + ' From ' + groupName + ' !')
+    #print('Successfully removed: ' + userName + ' From ' + groupName + ' !')
     response = conn.result
   else:
-    print('Delete Error')
+    #print('Delete Error')
     response = 'Delete Error'
   return response
   conn.unbind()
@@ -429,14 +417,14 @@ def get_all_ldap_objects(objclass):
     
     # Provide a search base to search for.
     search_base = app.config.get('baseDom')
-    print(search_base)
+    #print(search_base)
     # provide a uidNumber to search for. '*" to fetch all users/groups
     search_filter = '(objectClass='+objclass+')'
     allobjects = []
 
     # Establish connection to the server
     conn = connect_ldap()
-    print(conn)
+    #print(conn)
         
     # only the attributes specified will be returned
     conn.search(search_base=search_base,       
@@ -455,7 +443,7 @@ def get_all_ldap_objects(objclass):
           case 'group':
             if obj.samAccountName.value not in group_exceptions:
               allobjects.append(obj.cn.value)
-      print(allobjects)
+      #print(allobjects)
       return allobjects
     else:
       return "none"
