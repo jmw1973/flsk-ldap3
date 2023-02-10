@@ -2,7 +2,7 @@
 
 from app import app
 
-app.config['LDAPserver'] = "192.168.1.79"
+app.config['LDAPserver'] = "192.168.1.78"
 app.config['LDAPuser'] = "samdom\\administrator"
 #app.config['LDAPpassword'] = "5ambaPwd@"
 app.config['LDAPpassword'] = "Yi1se@i^h0"

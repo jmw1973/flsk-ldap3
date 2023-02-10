@@ -76,6 +76,7 @@ def submitRequestAccountForm():
    tenantName = request.form['tenantName']
    otherInfo = request.form['otherInfo']
 
+   updateyamlfile = utils.update_yaml_file('ezmeral.yaml', tenantName, logonName)
    app.logger.info("ACCOUNT REQUEST SUBMITTED: LogonName: " +logonName+" Tenant: "+tenantName+" OtherInfo: "+otherInfo)
    return "201"
 

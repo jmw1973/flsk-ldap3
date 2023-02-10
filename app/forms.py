@@ -19,7 +19,7 @@ class SignupForm(FlaskForm):
           "Tenant",
           [DataRequired()],
           choices=[
-               ("Pit1", "pit1"),
+               ("pit1", "pit1"),
                ("Tenant1", "tenant1"),
                ("Tenant2", "tenant2"),
                                                                                                                                   ],

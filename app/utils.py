@@ -135,12 +135,27 @@ def process_data_file():
       app.logger.info("------- input file processing COMPLETE ------")
       return "201"
 
+def update_yaml_file(yamlfile, header, dict_data):
+  with open(yamlfile,'r') as yamlfile:
+    current_yaml = yaml.safe_load(yamlfile)
+    current_yaml['environment'][header][header+'_users'].append(dict_data)
+    #return current_yaml
+  if current_yaml:
+    with open(yamlfile.name, 'w') as f:
+       print(current_yaml)
+       yaml.safe_dump(current_yaml, f)
+       return "201"
+
 
 def connect_ldap():
   server = Server(app.config.get('LDAPserver'), get_info=ALL)
   conn = Connection(server, user=app.config.get('LDAPuser'), password=app.config.get('LDAPpassword'), authentication=SIMPLE)
-  conn.bind()
-  return conn
+
+  if not conn.bind():
+    app.logger.error("Could not connect to LDAP server")
+  else: 
+    return conn
+
 
 def generate_password():
     # define the alphabet
