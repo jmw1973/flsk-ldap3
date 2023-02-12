@@ -16,3 +16,4 @@ wtforms==3.0.1; python_version >= "3.7"
 cryptography
 pyJWT
 pyyaml
+GitPython

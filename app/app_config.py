@@ -8,5 +8,6 @@ app.config['LDAPuser'] = "samdom\\administrator"
 app.config['LDAPpassword'] = "Yi1se@i^h0"
 app.config['baseDN'] = "CN=users,DC=samdom,DC=example,DC=com"
 app.config['baseDom'] = "DC=samdom,DC=example,DC=com"
+app.config['gitSourceFileURL'] = "git@github.com:jmw1973/gy_user_control.git"
 #app.config['SECRET_KEY'] = 'hjjlkJJHIGIH6glHGGF'
 app.config['DEBUG_LOGGING'] = 1

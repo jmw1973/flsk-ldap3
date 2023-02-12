@@ -8,6 +8,8 @@ from ldap3 import (HASHED_SALTED_SHA, MODIFY_REPLACE)
 from ldap3.utils.hashed import hashed
 import forms, utils
 from flask_wtf.csrf import CSRFProtect
+import uuid
+import git
 
 sys.path.append('/usr/local/lib/python3.9/site-packages')
 
@@ -25,8 +27,19 @@ app.config['SECRET_KEY'] = SECRET_KEY
 
 user_account_name = "testuser2" # test for now
 
+gitSourceFileURL = "git@github.com:jmw1973/gy_user_control.git"
 region = 'eu-west-2'
 jwt_token = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjEyMzQ1Njc4LTEyMzQtMTIzNC0xMjM0LTEyMzQ1Njc4OTAxMiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiZW1haWwiOiJqb2huMTU5OTlAdGVzdC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.sscGxWF8WncETBGsACLFvJwDhbWHr0Z3la3Be3VP1uGwh1w76-ho2JkH2nG0KnVSm-sPMRDmVghP_S26vpfSiQ" # test
+
+# setup ssh
+#if not os.path.exists("~/.ssh"):
+#     os.makedirs("~/.ssh")
+
+os.system('ssh-keyscan github.com > ~/.ssh/known_hosts')
+#setup git
+os.system('git config --global user.email "gy@test.com"')
+os.system('git config --global user.name "gy"')
+
 
 @app.route('/healthz')
 def healtcheck():
@@ -71,14 +84,42 @@ def requestAccount():
     return render_template('requestAccount.jinja2', form=form, userlogonname=user_account_name, title="Request Account")
 
 @app.route('/submitRequestAccountForm', methods=['POST'])
+@csrf.exempt
 def submitRequestAccountForm():
+   from git import Repo
+
    logonName = request.form['logonName']
    tenantName = request.form['tenantName']
    otherInfo = request.form['otherInfo']
 
-   updateyamlfile = utils.update_yaml_file('ezmeral.yaml', tenantName, logonName)
-   app.logger.info("ACCOUNT REQUEST SUBMITTED: LogonName: " +logonName+" Tenant: "+tenantName+" OtherInfo: "+otherInfo)
-   return "201"
+   # clone repo into random uuid name
+   repo_uuid = uuid.uuid4()
+   repo_path = "/tmp/"+str(repo_uuid)+"/"
+   repo_name = "gy_user_control"
+   repoSourceFile = "sourceData.yaml"
+
+   if not os.path.exists(repo_path):
+     os.makedirs(repo_path)
+     app.logger.info("Created folder: "+repo_path+" for local repo")
+     app.logger.info("Cloning from repo: "+gitSourceFileURL)
+
+   git.Git(repo_path).clone(gitSourceFileURL)
+   repo = git.Repo(repo_path+repo_name)
+   repo.git.checkout('-b', str(repo_uuid))
+
+   # make change to file
+   updateyamlfile = utils.update_yaml_file(repo_path+repo_name+"/"+repoSourceFile, tenantName, logonName)
+
+   try:
+     repo.git.add('--all')
+     repo.git.commit('-m', 'commit for: '+str(repo_uuid))#, author='gy@test.com')
+     origin = repo.remote(name='origin')
+     push_res = origin.push(str(repo_uuid))[0]
+     app.logger.info("ACCOUNT REQUEST SUBMITTED: LogonName: " +logonName+" Tenant: "+tenantName+" OtherInfo: "+otherInfo)
+     return "201"
+   except:
+     app.logger.error("Push for Branch: "+str(repo_uuid)+" Failed!")
+     return false
 
 @app.route('/processDataFile')
 def processDataFile():
