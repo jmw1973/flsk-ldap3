@@ -136,6 +136,10 @@ def process_data_file():
       return "201"
 
 def update_yaml_file(yamlfile, header, dict_data):
+  class IndentDumper(yaml.Dumper):
+    def increase_indent(self, flow=False, indentless=False):
+        return super(IndentDumper, self).increase_indent(flow, False)
+
   with open(yamlfile,'r') as yamlfile:
     current_yaml = yaml.safe_load(yamlfile)
     current_yaml['environment']['Tenant'][header]['Groups'][header+'_users']['Users'].append(dict_data)
@@ -143,7 +147,7 @@ def update_yaml_file(yamlfile, header, dict_data):
   if current_yaml:
     with open(yamlfile.name, 'w') as f:
        print(current_yaml)
-       yaml.safe_dump(current_yaml, f, sort_keys=False)
+       yaml.dump(current_yaml, f, sort_keys=False, Dumper=IndentDumper)
        return "201"
 
 def connect_ldap():
