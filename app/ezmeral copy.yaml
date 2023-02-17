@@ -1,0 +1,29 @@
+environment:
+  Tenant:
+    pit1:
+      cpu: 10
+      memory: 100
+      Groups:
+        pit1_admins:
+          Users:
+            - pit1admin1
+            - pit1admin2
+        pit1_users:
+          Users:
+            - pit1user1
+            - pit1user2
+            - pit1user3
+    tg3:
+      cpu: 60
+      memory: 200
+      Groups:
+        tg3_admins:
+          Users:
+            - tg3admin1
+        tg3_users:
+          Users:
+            - tg3user1
+
+
+
+  

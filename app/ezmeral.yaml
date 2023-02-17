@@ -1,22 +1,27 @@
 environment:
-  pit1:
-    pit1_admins:
-      - pit1admin1
-      - pit1admin2
-    pit1_users:
-      - pit1user1
-      - pit1user2
-      - pit1user3
-  tg3:
-    tg3_admins:
-      - tg3admin1
-      - tg3admin2
-    tg3_users:
-      - tg3user1
-      - tg3user2
-  ecc1:
-    ecc1_admins:
-      - ecc1_admin1
-      - ecc1_admin2
-    ecc1_users:
-      - ecc1_user1
+  Tenant:
+    pit1:
+      Groups:
+        pit1_admins:
+          Users:
+          - pit1admin1
+          - pit1admin2
+        pit1_users:
+          Users:
+          - pit1user1
+          - pit1user2
+          - pit1user3
+          - myshinynewuser
+      cpu: 10
+      memory: 100
+    tg3:
+      Groups:
+        tg3_admins:
+          Users:
+          - tg3admin1
+        tg3_users:
+          Users:
+          - tg3user1
+          - myshinynewuser2
+      cpu: 60
+      memory: 200

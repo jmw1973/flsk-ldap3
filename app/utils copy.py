@@ -55,24 +55,24 @@ def process_data_file():
       app.logger.info("existing users in LDAP are: "+str(allUsersLDAP))
       
       # iterate through data structure
-      for Tenant, values in data['environment']['Tenant'].items():
+      for key, value in data["environment"].items():
         # process groups from file
-        for group, values in values['Groups'].items():
-          allGroupsFile.append(group)
+        for key, value in value.items():
+          allGroupsFile.append(key)
           usersInCurrentGroup = []
           #print(key) # we have the group
-          if group in allGroupsLDAP:
+          if key in allGroupsLDAP:
             checkExistingGroup = "GROUP_EXISTS"
-            app.logger.info(group + ": is an existing Group")           
+            app.logger.info(key + ": is an existing Group")           
           else:
             checkExistingGroup = "GROUP_NOT_EXISTS"
-            app.logger.info(group + ": is NOT an existing Group in LDAP")
-            app.logger.info(group + ": attempting to add group to LDAP")
-            addgroup_result = add_object(group, group, 'group')
+            app.logger.info(key + ": is NOT an existing Group in LDAP")
+            app.logger.info(key + ": attempting to add group to LDAP")
+            addgroup_result = add_object(key, key, 'group')
             app.logger.info(addgroup_result)
 
           # process users from file
-          for user in values['Users']:
+          for user in value:
             usersInCurrentGroup.append(user)
             allUsersFile.append(user)
             # we have a user
@@ -88,25 +88,25 @@ def process_data_file():
               app.logger.info(adduser_result)
             
             # now we need to add user to group
-            checkuseringroup = checkUserInGroup(user, group)
+            checkuseringroup = checkUserInGroup(user, key)
             if checkuseringroup == "USER_NOT_IN_GROUP":
-              app.logger.info(user + ": is NOT an existing member of: "+group)
-              app.logger.info(user + ": attempting to add user to: "+group)
-              addusertogroupresult = addUserToGroup(user, group)
+              app.logger.info(user + ": is NOT an existing member of: "+key)
+              app.logger.info(user + ": attempting to add user to: "+key)
+              addusertogroupresult = addUserToGroup(user, key)
               app.logger.info(addusertogroupresult)
           #print("users in group:  "+key+str(usersInCurrentGroup))
 
           # now check if user is meant to be in this gorup (if added to another group by mistake - remove
           if checkExistingGroup == "GROUP_EXISTS": #check if existing group only
             #print("group exists, proceeding to check if user added by mistake to another group")
-            getgroupmembersLDAP = listUsersInGroupLDAP(group)
+            getgroupmembersLDAP = listUsersInGroupLDAP(key)
             for usertest in getgroupmembersLDAP:
               if usertest not in usersInCurrentGroup:
                 #print("user:"+usertest+" is in group: "+key+ " and is not supposed to be, according to input file")
                 #print("removing user: "+usertest+" from group: "+key)
-                app.logger.info("user:"+usertest+" is in group: "+group+ " and is not supposed to be, according to input file")
-                app.logger.info("removing user: "+usertest+" from group: "+group)
-                remuserfromgroup = removeUserFromGroup(usertest, group)
+                app.logger.info("user:"+usertest+" is in group: "+key+ " and is not supposed to be, according to input file")
+                app.logger.info("removing user: "+usertest+" from group: "+key)
+                remuserfromgroup = removeUserFromGroup(usertest, key)
                 app.logger.info(remuserfromgroup)
 
             
@@ -138,7 +138,7 @@ def process_data_file():
 def update_yaml_file(yamlfile, header, dict_data):
   with open(yamlfile,'r') as yamlfile:
     current_yaml = yaml.safe_load(yamlfile)
-    current_yaml['environment']['Tenant'][header]['Groups'][header+'_users']['Users'].append(dict_data)
+    current_yaml['environment'][header][header+'_users'].append(dict_data)
     #return current_yaml
   if current_yaml:
     with open(yamlfile.name, 'w') as f:
