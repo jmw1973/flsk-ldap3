@@ -143,9 +143,8 @@ def update_yaml_file(yamlfile, header, dict_data):
   if current_yaml:
     with open(yamlfile.name, 'w') as f:
        print(current_yaml)
-       yaml.safe_dump(current_yaml, f)
+       yaml.safe_dump(current_yaml, f, sort_keys=False)
        return "201"
-
 
 def connect_ldap():
   server = Server(app.config.get('LDAPserver'), get_info=ALL)

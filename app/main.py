@@ -103,23 +103,24 @@ def submitRequestAccountForm():
      app.logger.info("Created folder: "+repo_path+" for local repo")
      app.logger.info("Cloning from repo: "+gitSourceFileURL)
 
-   git.Git(repo_path).clone(gitSourceFileURL)
-   repo = git.Repo(repo_path+repo_name)
-   repo.git.checkout('-b', str(repo_uuid))
+   #git.Git(repo_path).clone(gitSourceFileURL)
+   #repo = git.Repo(repo_path+repo_name)
+   #repo.git.checkout('-b', str(repo_uuid))
 
    # make change to file
-   updateyamlfile = utils.update_yaml_file(repo_path+repo_name+"/"+repoSourceFile, tenantName, logonName)
+   #updateyamlfile = utils.update_yaml_file(repo_path+repo_name+"/"+repoSourceFile, tenantName, logonName)
+   updateyamlfile = utils.update_yaml_file('ezmeral.yaml', tenantName, logonName)
 
    try:
-     repo.git.add('--all')
-     repo.git.commit('-m', 'commit for: '+str(repo_uuid))#, author='gy@test.com')
-     origin = repo.remote(name='origin')
-     push_res = origin.push(str(repo_uuid))[0]
+     #repo.git.add('--all')
+     #repo.git.commit('-m', 'commit for: '+str(repo_uuid))#, author='gy@test.com')
+     #origin = repo.remote(name='origin')
+     #push_res = origin.push(str(repo_uuid))[0]
      app.logger.info("ACCOUNT REQUEST SUBMITTED: LogonName: " +logonName+" Tenant: "+tenantName+" OtherInfo: "+otherInfo)
      return "201"
    except:
      app.logger.error("Push for Branch: "+str(repo_uuid)+" Failed!")
-     return false
+     return False
 
 @app.route('/processDataFile')
 def processDataFile():
