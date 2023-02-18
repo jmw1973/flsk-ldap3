@@ -41,8 +41,6 @@ def print_values():
       for user in value:
         print(user) # we have the user
 
-
-
 def process_data_file():
       data = getEzmeralSourceData()
       allUsersFile = []
@@ -149,6 +147,18 @@ def update_yaml_file(yamlfile, header, dict_data):
        print(current_yaml)
        yaml.dump(current_yaml, f, sort_keys=False, Dumper=IndentDumper)
        return "201"
+
+def checkYAMLValue(header, yamldata):
+    data = getEzmeralSourceData()
+    print(data)
+
+    reqtest = data['environment']['Tenant'][header]['Groups'][header+'_users']['Users'][yamldata]
+    print(reqtest)
+    if reqtest:
+      print("Request already made for this user")
+      return True
+    else:
+      return False
 
 def connect_ldap():
   server = Server(app.config.get('LDAPserver'), get_info=ALL)

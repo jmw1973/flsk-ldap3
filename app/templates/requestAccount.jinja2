@@ -8,6 +8,7 @@
         type="text/css"
     />
 
+ 
     <script>
       $(document).ready(function() {
         $('#logonname').val('{{ userlogonname }}');
@@ -30,6 +31,7 @@
  <script>
  $(function() {
         $('#submitbtnRequestAccount').click(function() {
+
                 console.log('im in submit');
                 console.log($('#logonname').val());
                 console.log($('#tenant').val());
@@ -56,17 +58,40 @@
                           }
                       });
                 },
-                 error: function (request, status, error) {
-                    $.alert({
-                      'title': 'Error!',
-                      'content': request.responseJSON.message,
-                     });
-                }
+                 error: function (jqXHR, exception) {
+var error_msg = '';
+if (jqXHR.status === 0) {
+error_msg = 'Not connect.\n Verify Network.';
+} else if (jqXHR.status == 404) {
+// 404 page error
+error_msg = 'Requested page not found. [404]';
+} else if (jqXHR.status == 410) {
+// 410 app duplicate request error
+error_msg = 'You have already made a request! [410]';
+} else if (jqXHR.status == 500) {
+// 500 Internal Server error
+error_msg = 'Internal Server Error [500].';
+} else if (exception === 'parsererror') {
+// Requested JSON parse
+error_msg = 'Requested JSON parse failed.';
+} else if (exception === 'timeout') {
+// Time out error
+error_msg = 'Time out error.';
+} else if (exception === 'abort') {
+// request aborte
+error_msg = 'Ajax request aborted.';
+} else {
+error_msg = 'Uncaught Error.\n' + jqXHR.responseText;
+}
+// error alert message
+alert('error :: ' + error_msg);
+},
             });
         });
     });
  </script>
 
+  
 
 {% endblock %}
 

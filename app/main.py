@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, render_template, url_for
+from flask import Flask, request, redirect, render_template, url_for, session
 from app import app
 from ldap3 import Server, Connection, SIMPLE, SUBTREE, ALL, MODIFY_REPLACE
 import jwt
@@ -15,6 +15,7 @@ sys.path.append('/usr/local/lib/python3.9/site-packages')
 
 app = Flask(__name__)
 csrf = CSRFProtect(app)
+requestNumber = 0
 
 if not app.debug:
   # In production mode, add log handler to sys.stderr.
@@ -31,6 +32,7 @@ gitSourceFileURL = "git@github.com:jmw1973/gy_user_control.git"
 region = 'eu-west-2'
 jwt_token = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjEyMzQ1Njc4LTEyMzQtMTIzNC0xMjM0LTEyMzQ1Njc4OTAxMiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiZW1haWwiOiJqb2huMTU5OTlAdGVzdC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.sscGxWF8WncETBGsACLFvJwDhbWHr0Z3la3Be3VP1uGwh1w76-ho2JkH2nG0KnVSm-sPMRDmVghP_S26vpfSiQ" # test
 
+     #
 # setup ssh
 #if not os.path.exists("~/.ssh"):
 #     os.makedirs("~/.ssh")
@@ -40,13 +42,13 @@ os.system('ssh-keyscan github.com > ~/.ssh/known_hosts')
 os.system('git config --global user.email "gy@test.com"')
 os.system('git config --global user.name "gy"')
 
-
 @app.route('/healthz')
 def healtcheck():
   return "200"
 
 @app.route('/')
 def auth():
+
   headers_dict = request.__dict__
 
   if jwt_token:
@@ -88,10 +90,19 @@ def requestAccount():
 def submitRequestAccountForm():
    from git import Repo
 
+   global requestNumber
    logonName = request.form['logonName']
    tenantName = request.form['tenantName']
    otherInfo = request.form['otherInfo']
 
+   # first check if session has already made a request
+   #logonnamecheck = session['logonname']
+   #session['tenant']
+
+   if requestNumber > 0:
+     # request already submitted for this user and tenant during this session
+     return "", 410
+     
    # clone repo into random uuid name
    repo_uuid = uuid.uuid4()
    repo_path = "/tmp/"+str(repo_uuid)+"/"
@@ -117,6 +128,8 @@ def submitRequestAccountForm():
      #origin = repo.remote(name='origin')
      #push_res = origin.push(str(repo_uuid))[0]
      app.logger.info("ACCOUNT REQUEST SUBMITTED: LogonName: " +logonName+" Tenant: "+tenantName+" OtherInfo: "+otherInfo)
+     # set session variables for current request
+     requestNumber += 1
      return "201"
    except:
      app.logger.error("Push for Branch: "+str(repo_uuid)+" Failed!")
